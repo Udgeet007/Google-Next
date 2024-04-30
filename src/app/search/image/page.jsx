@@ -1,37 +1,31 @@
+import ImageSearchResults from '@/components/ImageSearchResults';
 import Link from 'next/link';
-import PaginationButtons from './PaginationButtons';
 
-export default function ImageSearchResults({ results }) {
-  return (
-    <div className='sm:pb-24 pb-40 mt-4'>
-      <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 px-3 space-x-4'>
-        {results.items.map((result) => (
-          <div className='mb-8' key={result.link}>
-            <div className='group'>
-              <Link href={result.image.contextLink}>
-                <img
-                  src={result.link}
-                  alt={result.title}
-                  className='h-60 group-hover:shadow-xl w-full object-contain transition-shadow duration-300'
-                />
-              </Link>
-              <Link href={result.image.contextLink}>
-                <h2 className='group-hover:underline truncate text-xl'>
-                  {result.title}
-                </h2>
-              </Link>
-              <Link href={result.image.contextLink}>
-                <p className='group-hover:underline truncate text-gray-600'>
-                  {result.displayLink}
-                </p>
-              </Link>
-            </div>
-          </div>
-        ))}
-      </div>
-      <div className='ml-16'>
-        <PaginationButtons />
-      </div>
-    </div>
+export default async function ImageSearchPage({ searchParams }) {
+  const startIndex = searchParams.start || '1';
+  await new Promise((resolve) => setTimeout(resolve, 1000));
+  const response = await fetch(
+    `https://www.googleapis.com/customsearch/v1?key=${process.env.API_KEY}&cx=${process.env.CONTEXT_KEY}&q=${searchParams.searchTerm}'}&searchType=image&start=${startIndex}`
   );
+  if (!response.ok) throw new Error('Something went wrong');
+  const data = await response.json();
+  const results = data.items;
+
+  if (!results) {
+    return (
+      <div className='flex flex-col justify-center items-center pt-10'>
+        <h1 className='text-3xl mb-4'>
+          No results found for {searchParams.searchTerm}
+        </h1>
+        <p className='text-lg'>
+          Try searching the web or images for something else{' '}
+          <Link href='/' className='text-blue-500'>
+            Home
+          </Link>
+        </p>
+      </div>
+    );
+  }
+
+  return <div>{results && <ImageSearchResults results={data} />}</div>;
 }
